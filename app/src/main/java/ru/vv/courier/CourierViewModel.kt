@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import ru.vv.courier.core.importing.ScreenshotParser
+import ru.vv.courier.core.importing.RoutePrivacy
 import ru.vv.courier.core.routing.*
 import ru.vv.courier.data.CourierDatabase
 import ru.vv.courier.data.MetadataEntity
@@ -46,6 +47,7 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
     private var matrix: TravelMatrix? = null
     private var startNodeId = "depot"
     private var revision = 0L
+    private var recomputeAfterWork = false
     private val draftOriginalIds = mutableListOf<String?>()
     private var importedDrafts = false
 
@@ -371,7 +373,9 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
         if (field in setOf(SettingField.RETURN_TO_DEPOT, SettingField.ALLOW_EARLY_SERVICE, SettingField.PRESERVE_COMPANY_ORDER)) {
             revision++
             _state.value = _state.value.copy(comparison = null)
-            if (matrix != null) optimize()
+            if (matrix != null) {
+                if (_state.value.busy) recomputeAfterWork = true else optimize()
+            }
         }
         if (field != SettingField.API_KEY) persist()
     }
@@ -414,6 +418,7 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
 
     private fun installMatrix(value: TravelMatrix) {
         matrix = value
+        recomputeAfterWork = true
         revision++
         _state.value = _state.value.copy(matrixLabel = value.source, matrixIsDemo = value.isDemo,
             matrixCapturedAt = value.capturedAt, comparison = null)
@@ -437,7 +442,13 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
             try { block() }
             catch (e: CancellationException) { throw e }
             catch (e: Exception) { inform(e.message ?: "Не удалось выполнить действие. Проверьте данные.") }
-            finally { _state.value = _state.value.copy(busy = false) }
+            finally {
+                _state.value = _state.value.copy(busy = false)
+                if (recomputeAfterWork) {
+                    recomputeAfterWork = false
+                    if (matrix != null) optimize()
+                }
+            }
         }
     }
 
@@ -500,12 +511,7 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
         require(parsed in -bound..bound) { "Координата за допустимым диапазоном." }
         return parsed
     }
-    private fun sanitizeAddress(value: String): String {
-        require(!Regex("(?:\\+7|8)\\s*\\(?\\d{3}\\)?[\\s-]*\\d{3}[\\s-]*\\d{2}[\\s-]*\\d{2}").containsMatchIn(value)) {
-            "Удалите телефон из адреса. Для маршрута нужны только улица и дом."
-        }
-        return value.trim().replace(Regex("(?:[,;]\\s*)?(?:квартира\\b|кв\\.|домофон\\b|код\\s+доступа\\b|подъезд\\b|этаж\\b).*$", RegexOption.IGNORE_CASE), "").trim().trimEnd(',', ';')
-    }
+    private fun sanitizeAddress(value: String): String = RoutePrivacy.sanitizeAddress(value)
     private fun java.io.InputStream.readBytesLimited(max: Int): ByteArray {
         val buffer = java.io.ByteArrayOutputStream()
         val block = ByteArray(8192)
