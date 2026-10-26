@@ -98,8 +98,11 @@ class MainActivity : ComponentActivity() {
 
     private fun openNavigator(address: String) {
         val order = model.state.value.orders.firstOrNull { it.address == address && !it.completed }
-        val deepLink = if (order?.latitude != null && order.longitude != null)
-            "yandexnavi://build_route_on_map?lat_to=${order.latitude}&lon_to=${order.longitude}"
+        val settings = model.state.value.settings
+        val latitude = order?.latitude ?: if (address == settings.depotAddress) settings.depotLatitude.replace(',', '.').toDoubleOrNull() else null
+        val longitude = order?.longitude ?: if (address == settings.depotAddress) settings.depotLongitude.replace(',', '.').toDoubleOrNull() else null
+        val deepLink = if (latitude != null && longitude != null)
+            "yandexnavi://build_route_on_map?lat_to=$latitude&lon_to=$longitude"
         else "yandexnavi://map_search?text=${Uri.encode(address)}"
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(deepLink)).setPackage("ru.yandex.yandexnavi"))

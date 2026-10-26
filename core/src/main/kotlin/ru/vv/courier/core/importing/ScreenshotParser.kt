@@ -133,6 +133,9 @@ class ScreenshotParser {
         val countdown = parseCountdown(block)
         if (countdown != null) {
             warnings += "Обратный отсчёт привязан к указанному времени получения скриншота. Старый скриншот с новым временем даст неверный срок."
+            if (Regex("(?:осталось|таймер|до\\s+опоздания)\\s*:?\\s*\\d{1,3}:[0-5]\\d(?![:\\d])", RegexOption.IGNORE_CASE).containsMatchIn(block)) {
+                warnings += "Двухчастный таймер принят как минуты:секунды. Если в источнике часы:минуты, исправьте абсолютный срок вручную."
+            }
             return null to capturedAt + countdown
         }
         deadlineTime.find(block)?.let { match ->

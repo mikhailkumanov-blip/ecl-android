@@ -284,9 +284,10 @@ class CourierViewModel(application: Application) : AndroidViewModel(application)
         val routePosition = current.comparison?.optimized?.stops?.indexOfFirst { it.order.id == id }
             ?.takeIf { it >= 0 }?.plus(1)
         val orders = current.orders.map { item ->
+            val pinned = item.pinnedPosition
             when {
                 item.id == order.id -> item.copy(completed = true, pinnedPosition = null)
-                item.pinnedPosition != null && routePosition != null && item.pinnedPosition > routePosition -> item.copy(pinnedPosition = item.pinnedPosition - 1)
+                pinned != null && routePosition != null && pinned > routePosition -> item.copy(pinnedPosition = pinned - 1)
                 routePosition == null -> item.copy(pinnedPosition = null)
                 else -> item
             }

@@ -182,6 +182,21 @@ private fun RouteScreen(state: AppUiState, actions: UiActions, openImport: () ->
         }
     }
     if (active.isEmpty()) {
+        if (state.orders.any { it.completed }) {
+            Panel {
+                Text("Все заказы доставлены", style = MaterialTheme.typography.titleLarge)
+                if (state.settings.returnToDepot) {
+                    Text("Осталось вернуться в даркстор. Обратный путь включён в расчёт.")
+                    state.comparison?.optimized?.let { PlanSummary("Возврат", it, state.now) }
+                    OutlinedButton(onClick = { actions.navigate(state.settings.depotAddress) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("В даркстор → Яндекс Навигатор")
+                    }
+                }
+                Text("Доход и расходы доступны во вкладке «Смена».")
+                Button(onClick = openImport, enabled = !state.busy) { Text("Добавить новые заказы") }
+            }
+            return
+        }
         Panel {
             Text("Начните с заказов", style = MaterialTheme.typography.titleLarge)
             Text("Импортируйте скриншоты вкладки «Мои» или введите заказы вручную. Сначала проверьте адреса и индивидуальные сроки.")
