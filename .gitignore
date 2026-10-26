@@ -1,10 +1,16 @@
 .gradle/
 **/build/
 local.properties
-*.keystore
-*.jks
+.idea/
+*.iml
+.DS_Store
 *.apk
 *.aab
-captures/
+*.jks
+*.keystore
+*.hprof
+app/src/main/assets/tessdata/*.traineddata
+# Never commit customer screenshots or OCR output.
 private/
-**/*.traineddata
+screenshots/
+ocr-output/

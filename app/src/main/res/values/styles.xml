@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.Courier" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#0C1410</item>
+        <item name="android:navigationBarColor">#152019</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#9AE9A5</item>
+    </style>
+</resources>
